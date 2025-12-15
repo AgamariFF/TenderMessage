@@ -1,8 +1,6 @@
 services:
-  tendertracker:
+  tendermessage:
     build: .
-    ports:
-      - "8081:8081"
     volumes:
       - ./data:/app/data
     restart: unless-stopped

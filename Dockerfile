@@ -7,8 +7,6 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o test-runner test.go
-
 RUN go build -o main .
 
 CMD ["./main"]
