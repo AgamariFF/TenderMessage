@@ -27,7 +27,7 @@ func setupConfig() models.Config {
 		MinPriceBuild:     0,
 		MinPriceMetal:     0,
 		ProcurementType:   "active",
-		VentCustomerPlace: []string{"OKER37"},
+		VentCustomerPlace: []string{"OKER37", "OKER33", "OKER30"},
 	}
 	return config
 }
