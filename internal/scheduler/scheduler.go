@@ -57,12 +57,12 @@ func (s *SimpleScheduler) getNewTenders(currentTenders []models.Tender) []models
 func (s *SimpleScheduler) Start(re *regexp.Regexp, teleBot *telegram.TelegramNotifier) {
 	log.Println("Планировщик запущен. Интервал:", s.interval)
 
-	// tenders, err := s.task(re)
-	// if err != nil {
-	// 	logger.SugaredLogger.Warnf("Ошибка выполнения task: %s\n", err)
-	// }
+	tenders, err := s.task(re)
+	if err != nil {
+		logger.SugaredLogger.Warnf("Ошибка выполнения task: %s\n", err)
+	}
 
-	// s.lastResults = tenders
+	s.lastResults = tenders
 
 	for {
 		time.Sleep(s.interval)
