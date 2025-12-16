@@ -1,6 +1,8 @@
 services:
   tendermessage:
     build: .
+    environment:
+      - TZ=Europe/Moscow
     volumes:
       - ./data:/app/data
     restart: unless-stopped
