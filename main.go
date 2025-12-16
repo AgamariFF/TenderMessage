@@ -1,4 +1,4 @@
-package main
+package main // docker run --rm -v "$PWD":/app -w /app golang:1.25-alpine go run main.go -test
 
 import (
 	"flag"

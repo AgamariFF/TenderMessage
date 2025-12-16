@@ -2,9 +2,11 @@ package telegram
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/AgamariFF/TenderMessage.git/internal/excel"
 	"github.com/AgamariFF/TenderMessage.git/internal/logger"
 	"github.com/AgamariFF/TenderMessage.git/internal/models"
 	"gopkg.in/telebot.v3"
@@ -36,31 +38,9 @@ func (n *TelegramNotifier) SendTenderNotification(tenders []models.Tender) error
 		return nil
 	}
 
-	batchSize := 5
-	for i := 0; i < len(tenders); i += batchSize {
-		end := i + batchSize
-		if end > len(tenders) {
-			end = len(tenders)
-		}
-
-		batch := tenders[i:end]
-		err := n.sendBatch(batch, i/batchSize+1, (len(tenders)+batchSize-1)/batchSize)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (n *TelegramNotifier) sendBatch(tenders []models.Tender, batchNum, totalBatches int) error {
 	var builder strings.Builder
 
-	if totalBatches > 1 {
-		builder.WriteString(fmt.Sprintf("🚨 <b>Новые тендеры (часть %d/%d):</b>\n\n", batchNum, totalBatches))
-	} else {
-		builder.WriteString("🚨 <b>Новые тендеры:</b>\n\n")
-	}
+	builder.WriteString(fmt.Sprintf("🚨 <b>Новые тендеры :</b>"))
 
 	for i, tender := range tenders {
 		if i > 0 {
@@ -82,7 +62,7 @@ func (n *TelegramNotifier) sendBatch(tenders []models.Tender, batchNum, totalBat
 		))
 	}
 
-	_, err := n.bot.Send(
+	msg, err := n.bot.Send(
 		&telebot.Chat{ID: n.chatID},
 		builder.String(),
 		&telebot.SendOptions{
@@ -91,7 +71,41 @@ func (n *TelegramNotifier) sendBatch(tenders []models.Tender, batchNum, totalBat
 		},
 	)
 
-	return err
+	filename, err := excel.ToExcel(&tenders)
+	if err != nil {
+		logger.SugaredLogger.Warnf(err.Error())
+	}
+
+	defer os.Remove(filename)
+
+	fileCaption := fmt.Sprintf(
+		"📊 <b>Полный отчет по %d тендерам</b>\n"+
+			"📅 Дата: %s\n"+
+			"💾 Файл: Excel (.xlsx)\n\n"+
+			"Содержит полную информацию из уведомления выше.",
+		len(tenders),
+		time.Now().Format("02.01.2006 15:04"),
+	)
+
+	doc := &telebot.Document{
+		File:     telebot.FromDisk(filename),
+		FileName: fmt.Sprintf("tenders_%s.xlsx", time.Now().Format("20060102")),
+		Caption:  fileCaption,
+	}
+
+	_, err = n.bot.Reply(msg, doc, &telebot.SendOptions{
+		ParseMode: telebot.ModeHTML,
+	})
+
+	if err != nil {
+		logger.SugaredLogger.Warnf("Ошибка отправки Excel: %v", err)
+		_, err = n.bot.Send(&telebot.Chat{ID: n.chatID}, doc, &telebot.SendOptions{
+			ParseMode: telebot.ModeHTML,
+		})
+		return err
+	}
+
+	return nil
 }
 
 // Вспомогательная функция для ограничения длины строки

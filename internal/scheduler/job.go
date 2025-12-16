@@ -13,6 +13,7 @@ func Search(re *regexp.Regexp) ([]models.Tender, error) {
 	if err != nil {
 		return []models.Tender{}, err
 	}
+
 	return tenders, nil
 }
 
